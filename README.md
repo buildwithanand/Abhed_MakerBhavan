@@ -1,35 +1,107 @@
-# ABHED — Multi-Sensor Field Awareness Platform
+# ABHED Field Awareness Platform
 
-[![Tests](https://github.com/OWNER/REPO/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/tests.yml) [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB.svg)](https://www.python.org/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> When you create the GitHub repository, replace `OWNER/REPO` in the workflow badge URL with your repository path.
+ABHED is a field-awareness and operator-monitoring platform for distributed sensor nodes, designed to help teams review live or simulated environmental activity, understand node health, and triage incidents with a clear operational view.
 
-> A continuously operating, multi-sensor field-awareness platform for detecting, cross-checking, and reporting activity so operators can prioritise where human attention is needed.
+This repository provides a working Flask-based dashboard, normalised sensor ingestion endpoints, event logging, simulation utilities, and an operator workflow for acknowledging or resolving candidate incidents.
 
-ABHED brings distributed sensor nodes into one operator workspace. This repository contains a polished dashboard, a working local API, a demo telemetry simulator, incident-review actions, event export, and a normalised ingestion contract for an edge gateway or sensor firmware.
+> Important: the default application starts in demo simulation mode. The displayed nodes, readings, and incidents are sample data and are not operational evidence.
 
-**Important:** the default dashboard starts in clearly labelled **demo simulation** mode. Its node positions, sensor readings, and incident candidates are sample data. They are not live detections, not geographically accurate, and must not be treated as operational evidence.
+## Overview
 
-## What works in this repository
+ABHED brings together:
 
-- **Operations overview:** node availability, open incident candidates, simulated detections, and network health indicators.
-- **Schematic field map:** interactive registered-node markers, logical links, health states, and unresolved incident overlays. This is a schematic, not a GIS map.
-- **Sensor network:** per-node status, battery estimate, supported channel list, latest normalised readings, and software-level self-tests.
-- **Incident workflow:** filter by status, acknowledge a candidate, resolve it with an operator note, and preserve these actions in the event trail.
-- **Event timeline:** inspect sensor-ingest and operator-action events; export the log to CSV.
-- **Configuration:** change workspace name, refresh interval, confidence threshold, and demo simulation state.
-- **Sensor API:** authenticated JSON ingestion at `POST /api/ingest/sensor` with payload validation.
-- **Serial bridge helper:** optional JSON-lines serial-to-HTTP adapter for firmware/gateway output that has already been normalised to the documented schema.
-- **Tests:** Flask API tests for health, settings validation, incident workflow, and authenticated ingestion.
+- sensor node health and telemetry summaries
+- a schematic field map with node connectivity
+- incident candidate detection and review workflows
+- event history and CSV export for audits
+- an API contract for normalised sensor ingestion
+- a local simulation environment for testing and demonstrations
+
+The system is intended as an operational prototype and integration scaffold for field deployments, not as a standalone safety-critical system.
+
+## Core capabilities
+
+- Operations overview with availability, health, and incident indicators
+- Schematic map for node visibility and logical connectivity
+- Normalised reading model for sensor inputs from edge devices or gateways
+- Incident lifecycle: open, acknowledge, resolve, note, export
+- Event timeline for operator and system actions
+- Configurable UI settings for refresh rate, confidence threshold, and simulation mode
+- Flask API with validation and authenticated sensor ingestion
+- JSON-lines serial bridge for devices already producing normalised payloads
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Edge Sensors / Firmware] --> B[Normalisation Layer]
+    B --> C[Trusted Gateway / Serial Bridge]
+    C --> D[ABHED Flask API]
+    D --> E[(In-memory state)]
+    D --> F[Dashboard / Operator UI]
+    F --> G[Incident Review + Event Timeline]
+    G --> H[CSV Export / Audit Trail]
+```
+
+```mermaid
+sequenceDiagram
+    participant Sensor as Sensor / Edge Device
+    participant Bridge as Gateway or Serial Bridge
+    participant API as ABHED API
+    participant Store as State + Event Log
+    participant UI as Browser Dashboard
+
+    Sensor->>Bridge: Normalised telemetry payload
+    Bridge->>API: POST /api/ingest/sensor
+    API->>Store: Validate + persist node reading
+    API->>Store: Create incident if threshold exceeded
+    Store-->>UI: Snapshot updates
+    UI->>API: GET /api/snapshot
+    Operator->>UI: Acknowledge / resolve incident
+    UI->>API: Incident action request
+    API->>Store: Append event and operator note
+```
+
+## Repository structure
+
+```text
+.
+├── abhed_app/
+│   ├── routes.py              # Flask routes and API logic
+│   ├── simulator.py           # Demo simulation and telemetry generation
+│   ├── state.py               # In-memory node/incident/event state
+│   ├── static/                # CSS, JavaScript, static assets
+│   └── templates/             # Dashboard HTML templates
+├── docs/
+│   ├── api.md                 # API reference and payload examples
+│   ├── architecture.md        # Design notes and deployment guidance
+│   ├── hardware-integration.md
+│   └── openapi.yaml           # OpenAPI spec
+├── scripts/
+│   ├── publish_sample.py      # Example sensor publisher
+│   └── serial_bridge.py       # JSON-lines serial adapter
+├── tests/
+│   └── ...                    # API and workflow validation tests
+├── .env.example               # Sample environment file
+├── requirements.txt           # Python dependencies
+├── run.py                     # Application startup entry point
+├── LICENSE                    # MIT license
+├── README.md                  # Project documentation
+├── SECURITY.md                # Security reporting guidance
+├── Makefile                   # Common local commands
+└── state/                     # Local runtime state or temporary artifacts
+```
 
 ## Quick start
 
-Requirements: Python 3.10 or newer.
+Requirements: Python 3.10+
 
 ### Windows (PowerShell)
 
 ```powershell
-cd abhed-github-repo
+cd ABHED_Field_Awareness_Platform
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -37,118 +109,134 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Open `.env` and set `ABHED_INGEST_API_KEY` to a long random secret before sending any sensor data. For local demo viewing, the other defaults are suitable.
+Update `.env` before sending live data, especially `ABHED_INGEST_API_KEY`.
 
 ```powershell
 python run.py
 ```
 
-Open **http://127.0.0.1:5000** in your browser.
+Open http://127.0.0.1:5000 in your browser.
 
 ### Linux / macOS
 
 ```bash
-cd abhed-github-repo
+cd ABHED_Field_Awareness_Platform
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env and replace ABHED_INGEST_API_KEY before ingesting data.
+```
+
+Then start the application:
+
+```bash
 python run.py
 ```
 
-The dashboard uses plain HTML, CSS, and JavaScript served by Flask; no Node.js or front-end build step is required.
+## Configuration
 
-## Connect a normalised sensor feed
+The project uses environment variables for local configuration. The defaults are suitable for a demo environment, but production or field deployment should use stronger configuration controls.
 
-1. Start ABHED and keep the dashboard reachable from the edge gateway on the same trusted LAN.
-2. Configure a strong `ABHED_INGEST_API_KEY` in `.env`, then restart the service.
-3. Send `POST /api/ingest/sensor` with the `X-API-Key` header and the normalised JSON fields described in [`docs/api.md`](docs/api.md).
-4. Confirm the incoming value appears in the node's latest readings and event timeline.
-5. If you send a detection candidate, include a boolean `detection` and a calibrated confidence score between `0` and `1`. Candidates above the configured threshold may create an incident record. The record is a prompt for operator review, not a verified conclusion.
+| Variable | Default | Description |
+|---|---|---|
+| `ABHED_HOST` | `127.0.0.1` | Bind address |
+| `ABHED_PORT` | `5000` | HTTP port |
+| `ABHED_DEBUG` | `false` | Flask debug mode |
+| `ABHED_SIMULATION` | `true` | Enables demo telemetry generation |
+| `ABHED_INGEST_API_KEY` | placeholder | Secret required for authenticated sensor writes |
+| `ABHED_SITE_NAME` | `ABHED Field Operations` | Display name in the UI and API metadata |
+| `ABHED_DETECTION_THRESHOLD` | `0.72` | Incident candidate threshold |
 
-Sample publisher:
+## Sensor ingestion and event flow
+
+1. A node or gateway normalises a sensor reading into the project schema.
+2. A trusted client posts to `POST /api/ingest/sensor` with the correct API key.
+3. The backend validates the payload, updates node state, and appends an event.
+4. If the reading exceeds the configured threshold and a similar candidate is not already open, an incident record may be created.
+5. The operator can acknowledge or resolve the candidate and add a note.
+6. Event history can be reviewed in the UI and exported to CSV.
+
+### Example publisher
 
 ```bash
-# Set the same key as ABHED_INGEST_API_KEY in .env.
-# Windows PowerShell: $env:ABHED_INGEST_API_KEY="your-secret"
+# Windows PowerShell
+$env:ABHED_INGEST_API_KEY="your-secret"
 python scripts/publish_sample.py --node ABH-N01 --sensor mmWave --value 5.4 --unit m
 ```
 
-Optional serial adapter for a device that emits **one complete JSON object per line** over USB/UART:
+### Serial bridge
+
+For hardware already producing one valid JSON object per line:
 
 ```bash
 python scripts/serial_bridge.py --port COM5 --baud 115200
 # Linux example: python scripts/serial_bridge.py --port /dev/ttyACM0 --baud 115200
 ```
 
-The bridge forwards already-normalised JSON. It does **not** decode a manufacturer's native sensor protocol automatically. For DFRobot C4001, MLX90640, geophone, microphone, or camera hardware, implement and validate the relevant acquisition/driver on the device first, then map its output to ABHED's schema. See [`docs/hardware-integration.md`](docs/hardware-integration.md).
+This helper does not replace device-specific sensor acquisition or calibration logic; it passes through an already-normalised payload.
 
-## API at a glance
+## API reference
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/api/health` | Service health and version |
-| `GET` | `/api/snapshot` | Dashboard snapshot |
-| `GET` | `/api/nodes` | Registered node telemetry |
-| `POST` | `/api/nodes` | Register a node before its first heartbeat |
-| `GET` | `/api/incidents?status=active` | Filter incident candidates |
-| `POST` | `/api/incidents/{id}/acknowledge` | Acknowledge a candidate |
-| `POST` | `/api/incidents/{id}/resolve` | Resolve a candidate and add a note |
-| `GET` | `/api/events?limit=50` | Recent event log |
-| `GET` | `/api/export/events.csv` | Download event CSV |
-| `GET` / `PUT` | `/api/config` | Read/update local configuration |
-| `POST` | `/api/nodes/{id}/self-test` | Software-level heartbeat check |
-| `POST` | `/api/ingest/sensor` | Authenticated normalised sensor ingestion |
+| `GET` | `/api/health` | Health and version probe |
+| `GET` | `/api/snapshot` | Dashboard data snapshot |
+| `GET` | `/api/nodes` | Node registry and telemetry |
+| `POST` | `/api/nodes` | Register a node |
+| `GET` | `/api/incidents?status=active` | Get incident candidates |
+| `POST` | `/api/incidents/{id}/acknowledge` | Acknowledge an incident |
+| `POST` | `/api/incidents/{id}/resolve` | Resolve an incident with a note |
+| `GET` | `/api/events?limit=50` | Recent event trail |
+| `GET` | `/api/export/events.csv` | Export the event log |
+| `GET` / `PUT` | `/api/config` | Read or update local configuration |
+| `POST` | `/api/nodes/{id}/self-test` | Run a software-level self-test |
+| `POST` | `/api/ingest/sensor` | Authenticated ingestion of a sensor payload |
 
-Full payload details and examples are in [`docs/api.md`](docs/api.md).
+See [`docs/api.md`](docs/api.md) for payload validation details and examples.
 
-## Run tests
+## Demo mode and operational cautions
+
+This project intentionally ships with a visible demo state to make testing and UI review easy.
+
+- Node positions and readings are illustrative, not geographic truth.
+- Incident candidates are not verified operational alerts.
+- The simulation is not a substitute for calibrated field devices.
+- Self-tests validate software flow, not physical sensor alignment or environmental conditions.
+- In-memory state is not durable; an app restart clears runtime data.
+
+## Deployment and hardening guidance
+
+ABHED is structured as a prototype and integration scaffold. Before any real-world deployment, operators should consider:
+
+- persistent storage for readings and events
+- user authentication and roles
+- TLS termination and encrypted transport
+- device-level credential rotation and node scoping
+- audit retention and backup plans
+- rate limits and abuse monitoring
+- sensor validation against ground truth and calibration procedures
+- privacy and cyber-security review for the target environment
+
+## Testing
 
 ```bash
 pytest -q
 ```
 
-## Environment variables
+## Contributing
 
-| Variable | Default | Description |
-|---|---|---|
-| `ABHED_HOST` | `127.0.0.1` | Bind interface. Keep local by default. |
-| `ABHED_PORT` | `5000` | HTTP port |
-| `ABHED_DEBUG` | `false` | Flask debug mode; leave off except local development |
-| `ABHED_SIMULATION` | `true` | Generate sample telemetry on startup |
-| `ABHED_INGEST_API_KEY` | placeholder / ingestion disabled | Secret required for sensor writes |
-| `ABHED_SITE_NAME` | `ABHED Field Operations` | Workspace title in API metadata |
-| `ABHED_DETECTION_THRESHOLD` | `0.72` | Candidate threshold, configurable in the UI |
+Contributions are welcome. For bug fixes, feature additions, or API changes:
 
-## Architecture and limitations
+1. create a feature branch
+2. update or add tests where relevant
+3. verify the local project behavior with the existing test suite
+4. open a pull request with a clear summary of changes
 
-```text
-Sensors / edge firmware
-        │  calibrated driver + local fusion (device-specific)
-        ▼
-Normalised JSON over trusted LAN or JSON-lines serial bridge
-        │  POST /api/ingest/sensor + X-API-Key
-        ▼
-Flask API ── in-memory state ── incident/event workflow
-        │
-        ▼
-Browser dashboard (HTML + CSS + JavaScript, polling API)
-```
+## Security
 
-- The repository is a **prototype / integration scaffold**, not a certified safety or defence system.
-- State is held in process memory and is lost when the app restarts. Use a persistent database, authentication, role-based access, encrypted transport, audit retention, backups, and deployment hardening before multi-user or field use.
-- The included self-test validates the dashboard's software path only; it cannot prove a physical sensor is aligned, calibrated, unobstructed, or operating correctly.
-- A sensor reading alone does not establish a person's identity, intent, or a hostile event. Verify candidate events with independent evidence and human review.
-- Do not expose the development server directly to the public internet. Use a secured deployment architecture and a network/security review before real sensor integration.
-
-## Suggested GitHub repository description
-
-**ABHED is a multi-sensor field-awareness dashboard for edge-node health, cross-sensor event review, and operator incident reporting. Includes demo simulation, a Flask API, sensor ingestion scaffold, and CSV audit export.**
+Please report security issues privately in accordance with [`SECURITY.md`](SECURITY.md). Do not disclose vulnerabilities publicly before a remediation path has been established.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
-#   A b h e d _ M a k e r B h a v a n  
- 
+This project is licensed under the MIT license. See [`LICENSE`](LICENSE).
