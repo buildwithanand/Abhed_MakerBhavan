@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1118">
+  <meta name="description" content="ABHED multi-sensor field awareness and incident management dashboard.">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>ABHED | Field Operations</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview" aria-label="ABHED home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 42 42" aria-hidden="true"><path d="M21 3 35 9v10c0 9-5.6 15.4-14 20C12.6 34.4 7 28 7 19V9L21 3Z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 22h5l3-8 4 14 3-6h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21" cy="21" r="15.5" fill="none" stroke="currentColor" stroke-opacity=".22"/></svg>
+        </span>
+        <span class="brand-copy"><strong>ABHED</strong><small>FIELD AWARENESS</small></span>
+      </a>
+      <div class="workspace-label">OPERATIONS CENTER</div>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon" data-icon="grid"></span><span>Overview</span><span class="nav-chevron">›</span></button>
+        <button class="nav-item" data-view="map"><span class="nav-icon" data-icon="map"></span><span>Field map</span></button>
+        <button class="nav-item" data-view="sensors"><span class="nav-icon" data-icon="activity"></span><span>Sensor network</span></button>
+        <button class="nav-item" data-view="incidents"><span class="nav-icon" data-icon="alert"></span><span>Incidents</span><span class="nav-count" id="navIncidentCount">02</span></button>
+        <button class="nav-item" data-view="events"><span class="nav-icon" data-icon="clock"></span><span>Event timeline</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-health"><span class="health-dot"></span><div><strong>Platform status</strong><small id="sideHealthText">Nominal operation</small></div><span class="side-health-chevron">⌄</span></div>
+        <button class="nav-item settings-nav" data-view="settings"><span class="nav-icon" data-icon="settings"></span><span>Configuration</span></button>
+        <div class="sidebar-foot"><span>ABHED CONTROL SUITE</span><span>BUILD 1.0.0 · PREVIEW</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>ABHED</span><span class="crumb-slash">/</span><strong id="breadcrumbCurrent">Overview</strong></div>
+        <div class="topbar-actions">
+          <label class="search-box"><span data-icon="search"></span><input id="globalSearch" type="search" placeholder="Search nodes, incidents…" aria-label="Search dashboard"><kbd>⌘ K</kbd></label>
+          <button class="icon-button" id="exportBtn" title="Export event log as CSV" aria-label="Export events"><span data-icon="download"></span></button>
+          <span class="top-divider"></span>
+          <div class="operator-chip"><span class="operator-avatar">OP</span><span><strong>Field operator</strong><small>Local session</small></span><span class="chevron">⌄</span></div>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <div class="page-heading">
+          <div><div class="eyebrow" id="pageEyebrow">MISSION CONTROL <span class="eyebrow-line"></span> <span id="liveClock">LOCAL TIME</span></div><h1 id="pageTitle">Field overview</h1><p id="pageSubtitle">One operational picture across distributed sensing nodes.</p></div>
+          <div class="heading-status"><span class="live-dot"></span><span id="connectionLabel">CONNECTING TO LOCAL SERVICE</span><span class="status-separator">·</span><span id="lastUpdated">Waiting for first update</span></div>
+        </div>
+        <div id="demoNotice" class="demo-notice"><span data-icon="info"></span><div><strong>DEMO SIMULATION ACTIVE</strong><span>All readings and incidents currently shown are generated sample data, not live field detections.</span></div><button data-action="open-settings" class="notice-link">Configure <span>↗</span></button></div>
+        <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+        <section id="viewRoot" aria-live="polite"><div class="loading-card"><span class="loading-spinner"></span><span>Loading field status…</span></div></section>
+        <footer class="page-footer"><span>ABHED · MULTI-SENSOR FIELD AWARENESS</span><span><i class="footer-dot"></i>LOCAL SERVICE <span id="footerServiceStatus">CONNECTING</span><span class="footer-sep">/</span><span id="footerUpdated">—</span></span></footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

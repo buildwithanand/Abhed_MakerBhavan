@@ -1,0 +1,164 @@
+openapi: 3.1.0
+info:
+  title: ABHED Field Awareness API
+  version: 1.0.0
+  description: Local prototype API for node telemetry, incident review, event history, and configuration.
+servers:
+  - url: http://127.0.0.1:5000
+paths:
+  /api/health:
+    get:
+      summary: Check HTTP service health
+      responses:
+        '200':
+          description: Service is responding
+  /api/snapshot:
+    get:
+      summary: Fetch dashboard snapshot
+      responses:
+        '200':
+          description: Current overview, node, incident, event, and configuration state
+  /api/nodes:
+    get:
+      summary: List registered nodes
+      responses:
+        '200':
+          description: Registered node telemetry
+    post:
+      summary: Register a node
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, name, sensors]
+              properties:
+                id: { type: string, minLength: 2, maxLength: 40 }
+                name: { type: string, minLength: 1, maxLength: 80 }
+                sensors:
+                  oneOf:
+                    - type: array
+                      minItems: 1
+                      maxItems: 12
+                      items: { type: string }
+                    - type: string
+                x: { type: integer, minimum: 0, maximum: 100, default: 50 }
+                y: { type: integer, minimum: 0, maximum: 100, default: 50 }
+      responses:
+        '201': { description: Node registered in the in-memory registry }
+        '400': { description: Invalid node fields or duplicate ID }
+  /api/incidents:
+    get:
+      summary: List incident candidates
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [all, active, acknowledged, resolved]
+            default: all
+      responses:
+        '200': { description: Incident candidates }
+        '400': { description: Invalid status filter }
+  /api/incidents/{incident_id}/acknowledge:
+    post:
+      summary: Acknowledge an incident candidate
+      parameters:
+        - in: path
+          name: incident_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Incident acknowledged }
+        '404': { description: Incident not found }
+        '409': { description: Incident already resolved }
+  /api/incidents/{incident_id}/resolve:
+    post:
+      summary: Resolve an incident candidate
+      parameters:
+        - in: path
+          name: incident_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Incident resolved }
+        '404': { description: Incident not found }
+  /api/events:
+    get:
+      summary: List recent events
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 300, default: 50 }
+      responses:
+        '200': { description: Recent event records }
+  /api/export/events.csv:
+    get:
+      summary: Export event history as CSV
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema: { type: string }
+  /api/config:
+    get:
+      summary: Get dashboard configuration
+      responses:
+        '200': { description: Current configuration }
+    put:
+      summary: Update dashboard configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                site_name: { type: string, minLength: 1, maxLength: 100 }
+                refresh_seconds: { type: integer, minimum: 2, maximum: 15 }
+                detection_threshold: { type: number, minimum: 0.1, maximum: 0.99 }
+                simulation_enabled: { type: boolean }
+      responses:
+        '200': { description: Configuration updated }
+        '400': { description: Invalid configuration }
+  /api/ingest/sensor:
+    post:
+      summary: Ingest one normalised sensor reading
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: X-API-Key
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [node_id, sensor_type]
+              properties:
+                node_id: { type: string }
+                sensor_type: { type: string }
+                metric: { type: string }
+                value: { type: number }
+                unit: { type: string }
+                event_type: { type: string, enum: [telemetry, detection] }
+                detection: { type: boolean }
+                confidence: { type: number, minimum: 0, maximum: 1 }
+                classification: { type: string }
+                note: { type: string }
+      responses:
+        '201': { description: Reading accepted }
+        '401': { description: Invalid API key }
+        '404': { description: Unknown node ID }
+        '503': { description: Ingestion disabled until an API key is configured }
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
