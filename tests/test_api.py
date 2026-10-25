@@ -275,6 +275,14 @@ def test_node_ids_are_normalized_and_lookups_ignore_case(client):
     assert node['status'] == 'degraded'
 
 
+def test_setting_node_to_current_status_does_not_duplicate_audit_event(client):
+    state = client.application.extensions['abhed_state']
+    initial_events = len(state.snapshot()['events'])
+    response = client.post('/api/nodes/ABH-N01/status', json={'status':'online'})
+    assert response.status_code == 200
+    assert len(state.snapshot()['events']) == initial_events
+
+
 def test_duplicate_node_rejected(client):
     created = client.post('/api/nodes', json={'id':'ABH-N01','name':'Duplicate','sensors':['mmWave']})
     assert created.status_code == 400

@@ -395,6 +395,8 @@ class SystemState:
                 return False
             if status not in {"online", "degraded", "offline"}:
                 raise ValueError("status must be online, degraded, or offline.")
+            if node["status"] == status:
+                return True
             node["status"] = status
             if status != "offline":
                 node["last_seen"] = utc_now()
