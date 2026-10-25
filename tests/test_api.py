@@ -109,6 +109,20 @@ def test_config_rejects_non_integer_refresh_interval(client, refresh_seconds):
     assert response.json['error'] == 'refresh_seconds must be an integer.'
 
 
+@pytest.mark.parametrize('refresh_seconds', ['3', '5.0'])
+def test_config_rejects_string_refresh_interval(client, refresh_seconds):
+    response = client.put('/api/config', json={'refresh_seconds': refresh_seconds})
+    assert response.status_code == 400
+    assert response.json['error'] == 'refresh_seconds must be an integer.'
+
+
+@pytest.mark.parametrize('threshold', ['0.8', True])
+def test_config_requires_json_number_for_threshold(client, threshold):
+    response = client.put('/api/config', json={'detection_threshold': threshold})
+    assert response.status_code == 400
+    assert response.json['error'] == 'detection_threshold must be a number.'
+
+
 def test_invalid_config_update_does_not_partially_apply(client):
     original_config = client.get('/api/config').json
     response = client.put('/api/config', json={

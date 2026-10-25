@@ -216,15 +216,18 @@ class SystemState:
                 if not site_name or len(site_name) > 100:
                     raise ValueError("site_name must contain 1–100 characters.")
             if "detection_threshold" in payload:
+                requested_threshold = payload["detection_threshold"]
+                if isinstance(requested_threshold, bool) or not isinstance(requested_threshold, (int, float)):
+                    raise ValueError("detection_threshold must be a number.")
                 try:
-                    detection_threshold = float(payload["detection_threshold"])
+                    detection_threshold = float(requested_threshold)
                 except (TypeError, ValueError):
                     raise ValueError("detection_threshold must be a number.")
                 if not math.isfinite(detection_threshold) or not 0.1 <= detection_threshold <= 0.99:
                     raise ValueError("detection_threshold must be between 0.10 and 0.99.")
             if "refresh_seconds" in payload:
                 requested_refresh = payload["refresh_seconds"]
-                if isinstance(requested_refresh, bool):
+                if isinstance(requested_refresh, bool) or not isinstance(requested_refresh, (int, float)):
                     raise ValueError("refresh_seconds must be an integer.")
                 try:
                     refresh_seconds = int(requested_refresh)
