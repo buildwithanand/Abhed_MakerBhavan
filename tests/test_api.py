@@ -74,6 +74,29 @@ def test_incident_transitions_reject_duplicate_actions(client):
     assert duplicate_resolve.json['error'] == 'Incident has already been resolved.'
 
 
+@pytest.mark.parametrize('body', ['[]', '"operator"', 'null'])
+def test_incident_actions_reject_non_object_bodies(client, body):
+    incident_id = next(i for i in client.get('/api/incidents').json if i['status'] == 'active')['id']
+    response = client.post(
+        f'/api/incidents/{incident_id}/acknowledge',
+        data=body,
+        content_type='application/json',
+    )
+    assert response.status_code == 400
+    assert response.json['error'] == 'Request body must be a JSON object.'
+
+
+@pytest.mark.parametrize(('action', 'payload'), [
+    ('acknowledge', {'operator':'   '}),
+    ('acknowledge', {'operator':17}),
+    ('resolve', {'operator':'Operator','note':17}),
+])
+def test_incident_actions_validate_operator_and_note(client, action, payload):
+    incident_id = next(i for i in client.get('/api/incidents').json if i['status'] == 'active')['id']
+    response = client.post(f'/api/incidents/{incident_id}/{action}', json=payload)
+    assert response.status_code == 400
+
+
 def test_config_validation(client):
     good = client.put('/api/config', json={'refresh_seconds': 5, 'detection_threshold': 0.8})
     assert good.status_code == 200

@@ -76,9 +76,14 @@ def register_routes(app) -> None:
 
     @app.post("/api/incidents/<incident_id>/acknowledge")
     def acknowledge(incident_id: str):
-        body = _json_body()
+        body = request.get_json(silent=True) if request.data else {}
+        if not isinstance(body, dict):
+            return jsonify({"error": "Request body must be a JSON object."}), 400
+        operator = body.get("operator", "Duty operator")
+        if not isinstance(operator, str) or not operator.strip() or len(operator.strip()) > 80:
+            return jsonify({"error": "operator must contain 1–80 characters."}), 400
         try:
-            result = _state().acknowledge_incident(incident_id, str(body.get("operator", "Duty operator")))
+            result = _state().acknowledge_incident(incident_id, operator.strip())
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 409
         if result is None:
@@ -87,11 +92,19 @@ def register_routes(app) -> None:
 
     @app.post("/api/incidents/<incident_id>/resolve")
     def resolve(incident_id: str):
-        body = _json_body()
+        body = request.get_json(silent=True) if request.data else {}
+        if not isinstance(body, dict):
+            return jsonify({"error": "Request body must be a JSON object."}), 400
+        operator = body.get("operator", "Duty operator")
+        note = body.get("note", "")
+        if not isinstance(operator, str) or not operator.strip() or len(operator.strip()) > 80:
+            return jsonify({"error": "operator must contain 1–80 characters."}), 400
+        if not isinstance(note, str):
+            return jsonify({"error": "note must be a string."}), 400
         try:
             result = _state().resolve_incident(incident_id,
-                                               str(body.get("operator", "Duty operator")),
-                                               str(body.get("note", "")))
+                                               operator.strip(),
+                                               note)
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 409
         if result is None:
