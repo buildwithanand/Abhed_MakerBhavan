@@ -55,6 +55,12 @@ def test_config_validation(client):
     assert invalid_simulation.status_code == 400
 
 
+@pytest.mark.parametrize('threshold', [float('nan'), float('inf'), float('-inf')])
+def test_config_rejects_non_finite_threshold(client, threshold):
+    response = client.put('/api/config', json={'detection_threshold': threshold})
+    assert response.status_code == 400
+
+
 def test_config_accepts_boolean_simulation_setting(client):
     response = client.put('/api/config', json={'simulation_enabled': False})
     assert response.status_code == 200
@@ -93,6 +99,19 @@ def test_ingest_requires_boolean_detection_flag(client):
     response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
     assert response.status_code == 400
     assert response.json['error'] == 'detection must be a boolean.'
+
+
+@pytest.mark.parametrize(('field', 'value'), [
+    ('value', float('nan')),
+    ('value', float('inf')),
+    ('confidence', float('nan')),
+    ('confidence', float('inf')),
+])
+def test_ingest_rejects_non_finite_numbers(client, field, value):
+    payload = {'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,'confidence':0.0}
+    payload[field] = value
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 400
 
 
 def test_unknown_node_rejected(client):

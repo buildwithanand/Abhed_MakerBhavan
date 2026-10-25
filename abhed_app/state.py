@@ -6,6 +6,7 @@ this prototype for a persistent or operational deployment.
 from __future__ import annotations
 
 import copy
+import math
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -215,7 +216,7 @@ class SystemState:
                     detection_threshold = float(payload["detection_threshold"])
                 except (TypeError, ValueError):
                     raise ValueError("detection_threshold must be a number.")
-                if not 0.1 <= detection_threshold <= 0.99:
+                if not math.isfinite(detection_threshold) or not 0.1 <= detection_threshold <= 0.99:
                     raise ValueError("detection_threshold must be between 0.10 and 0.99.")
             if "refresh_seconds" in payload:
                 try:
@@ -259,9 +260,9 @@ class SystemState:
             confidence = float(payload.get("confidence", 0))
         except (TypeError, ValueError):
             raise ValueError("value and confidence must be numeric.")
-        if not (-1_000_000 <= value <= 1_000_000):
+        if not math.isfinite(value) or not (-1_000_000 <= value <= 1_000_000):
             raise ValueError("value is outside the accepted range.")
-        if not 0 <= confidence <= 1:
+        if not math.isfinite(confidence) or not 0 <= confidence <= 1:
             raise ValueError("confidence must be between 0 and 1.")
         if "detection" in payload and not isinstance(payload["detection"], bool):
             raise ValueError("detection must be a boolean.")
