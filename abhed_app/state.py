@@ -201,32 +201,42 @@ class SystemState:
 
     def update_config(self, payload: dict[str, Any]) -> dict[str, Any]:
         with self.lock:
+            site_name = self.site_name
+            detection_threshold = self.detection_threshold
+            refresh_seconds = self.refresh_seconds
+            simulation_enabled = self.simulation_enabled
+
             if "site_name" in payload:
-                name = str(payload["site_name"]).strip()
-                if not name or len(name) > 100:
+                site_name = str(payload["site_name"]).strip()
+                if not site_name or len(site_name) > 100:
                     raise ValueError("site_name must contain 1–100 characters.")
-                self.site_name = name
             if "detection_threshold" in payload:
                 try:
-                    threshold = float(payload["detection_threshold"])
+                    detection_threshold = float(payload["detection_threshold"])
                 except (TypeError, ValueError):
                     raise ValueError("detection_threshold must be a number.")
-                if not 0.1 <= threshold <= 0.99:
+                if not 0.1 <= detection_threshold <= 0.99:
                     raise ValueError("detection_threshold must be between 0.10 and 0.99.")
-                self.detection_threshold = threshold
             if "refresh_seconds" in payload:
                 try:
-                    refresh = int(payload["refresh_seconds"])
+                    refresh_seconds = int(payload["refresh_seconds"])
                 except (TypeError, ValueError):
                     raise ValueError("refresh_seconds must be an integer.")
-                if not 2 <= refresh <= 15:
+                if not 2 <= refresh_seconds <= 15:
                     raise ValueError("refresh_seconds must be between 2 and 15.")
-                self.refresh_seconds = refresh
             if "simulation_enabled" in payload:
-                simulation_enabled = payload["simulation_enabled"]
-                if not isinstance(simulation_enabled, bool):
+                requested_simulation = payload["simulation_enabled"]
+                if not isinstance(requested_simulation, bool):
                     raise ValueError("simulation_enabled must be a boolean.")
-                self.simulation_enabled = simulation_enabled
+                simulation_enabled = requested_simulation
+
+            simulation_changed = simulation_enabled != self.simulation_enabled
+            self.site_name = site_name
+            self.detection_threshold = detection_threshold
+            self.refresh_seconds = refresh_seconds
+            self.simulation_enabled = simulation_enabled
+
+            if simulation_changed:
                 self._add_event_unlocked("simulation_mode", "Simulation mode updated",
                                           f"Simulation mode {'enabled' if self.simulation_enabled else 'disabled'}.",
                                           "info", "SYS")

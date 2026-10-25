@@ -58,6 +58,18 @@ def test_config_accepts_boolean_simulation_setting(client):
     assert response.json['config']['simulation_enabled'] is False
 
 
+def test_invalid_config_update_does_not_partially_apply(client):
+    original_config = client.get('/api/config').json
+    response = client.put('/api/config', json={
+        'site_name': 'Changed site',
+        'detection_threshold': 0.9,
+        'refresh_seconds': 8,
+        'simulation_enabled': 'false',
+    })
+    assert response.status_code == 400
+    assert client.get('/api/config').json == original_config
+
+
 def test_ingest_requires_api_key(client):
     payload = {'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,'unit':'m'}
     response = client.post('/api/ingest/sensor', json=payload)
