@@ -27,6 +27,12 @@ def test_snapshot_contains_nodes_and_incidents(client):
     assert 'incidents' in body
 
 
+@pytest.mark.parametrize('limit', ['0', '301', 'invalid'])
+def test_events_rejects_invalid_limit(client, limit):
+    response = client.get(f'/api/events?limit={limit}')
+    assert response.status_code == 400
+
+
 def test_incident_acknowledge_and_resolve(client):
     active = next(i for i in client.get('/api/incidents').json if i['status'] == 'active')
     acknowledged = client.post(f"/api/incidents/{active['id']}/acknowledge", json={'operator':'Test operator'})

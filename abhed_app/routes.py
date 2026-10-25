@@ -46,9 +46,11 @@ def register_routes(app) -> None:
     @app.get("/api/events")
     def events():
         try:
-            limit = min(300, max(1, int(request.args.get("limit", "50"))))
+            limit = int(request.args.get("limit", "50"))
         except ValueError:
             return jsonify({"error": "limit must be an integer."}), 400
+        if not 1 <= limit <= 300:
+            return jsonify({"error": "limit must be between 1 and 300."}), 400
         return jsonify(_state().snapshot()["events"][:limit])
 
     @app.get("/api/config")
