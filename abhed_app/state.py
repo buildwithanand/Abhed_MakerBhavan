@@ -352,7 +352,9 @@ class SystemState:
         sensors = []
         seen_sensors = set()
         for item in sensor_values:
-            label = str(item).strip()
+            if not isinstance(item, str):
+                raise ValueError("sensor labels must be strings.")
+            label = item.strip()
             normalized_label = label.casefold()
             if label and normalized_label not in seen_sensors:
                 sensors.append(label)

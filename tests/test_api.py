@@ -273,6 +273,15 @@ def test_register_node_deduplicates_sensor_labels_case_insensitively(client):
     assert response.json['node']['sensors'] == ['mmWave', 'Thermal']
 
 
+@pytest.mark.parametrize('sensors', [['mmWave', 17], ['mmWave', None]])
+def test_register_node_rejects_non_string_sensor_labels(client, sensors):
+    response = client.post('/api/nodes', json={
+        'id':'ABH-N11','name':'Invalid labels','sensors':sensors,
+    })
+    assert response.status_code == 400
+    assert response.json['error'] == 'sensor labels must be strings.'
+
+
 def test_simulator_keeps_running_when_all_nodes_are_offline():
     state = SystemState(simulation_enabled=True)
     for node in state.nodes:
