@@ -1,5 +1,8 @@
+import time
+
 import pytest
 from abhed_app import create_app
+from abhed_app.simulator import Simulator
 from abhed_app.state import SystemState
 
 
@@ -113,3 +116,18 @@ def test_register_node_and_ingest_first_heartbeat(client):
 def test_duplicate_node_rejected(client):
     created = client.post('/api/nodes', json={'id':'ABH-N01','name':'Duplicate','sensors':['mmWave']})
     assert created.status_code == 400
+
+
+def test_simulator_keeps_running_when_all_nodes_are_offline():
+    state = SystemState(simulation_enabled=True)
+    for node in state.nodes:
+        node['status'] = 'offline'
+
+    simulator = Simulator(state, interval=0.001)
+    simulator.start()
+    try:
+        time.sleep(0.05)
+        assert simulator._thread is not None
+        assert simulator._thread.is_alive()
+    finally:
+        simulator.stop()

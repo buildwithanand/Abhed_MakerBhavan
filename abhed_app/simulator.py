@@ -50,16 +50,18 @@ class Simulator:
                         elif reading["metric"] == "vibration_rms":
                             reading["value"] = round(max(0.001, 0.018 + random.uniform(-0.009, 0.014)), 3)
                         reading["updated_at"] = utc_now()
+                reporting_nodes = [node for node in self.state.nodes if node["status"] != "offline"]
                 # Add a low-volume stream of operational events without creating a constant alarm feed.
-                if tick % 8 == 0:
-                    node = random.choice([n for n in self.state.nodes if n["status"] != "offline"])
+                if tick % 8 == 0 and reporting_nodes:
+                    node = random.choice(reporting_nodes)
                     reading = random.choice(node["readings"])
                     self.state._add_event_unlocked(
                         "sensor_reading", "Telemetry heartbeat",
                         f"{node['id']} · {reading['sensor']} refreshed. Demo telemetry only.", "info", node["id"])
                 # Rare, medium-confidence candidates make the incident workflow demonstrable.
-                if tick % 13 == 0 and random.random() < 0.30:
-                    node = random.choice([n for n in self.state.nodes if n["status"] == "online"])
+                online_nodes = [node for node in self.state.nodes if node["status"] == "online"]
+                if tick % 13 == 0 and online_nodes and random.random() < 0.30:
+                    node = random.choice(online_nodes)
                     exists = any(i["node_id"] == node["id"] and i["status"] in {"active", "acknowledged"}
                                  for i in self.state.incidents)
                     if not exists:
