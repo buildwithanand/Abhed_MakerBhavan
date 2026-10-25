@@ -143,6 +143,14 @@ def test_ingest_requires_boolean_detection_flag(client):
     assert response.json['error'] == 'detection must be a boolean.'
 
 
+@pytest.mark.parametrize('event_type', ['unknown', '', 1, None])
+def test_ingest_rejects_unsupported_event_type(client, event_type):
+    payload = {'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,'event_type':event_type}
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 400
+    assert response.json['error'] == 'event_type must be telemetry or detection.'
+
+
 @pytest.mark.parametrize(('field', 'value'), [
     ('value', float('nan')),
     ('value', float('inf')),
