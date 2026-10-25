@@ -221,6 +221,14 @@ def test_register_node_rejects_non_integer_coordinates(client, coordinate, value
     assert response.json['error'] == 'x and y positions must be integers from 0 to 100.'
 
 
+def test_register_node_deduplicates_sensor_labels_case_insensitively(client):
+    response = client.post('/api/nodes', json={
+        'id':'ABH-N09','name':'Sensor labels','sensors':['mmWave', 'mmwave', 'Thermal', 'THERMAL'],
+    })
+    assert response.status_code == 201
+    assert response.json['node']['sensors'] == ['mmWave', 'Thermal']
+
+
 def test_simulator_keeps_running_when_all_nodes_are_offline():
     state = SystemState(simulation_enabled=True)
     for node in state.nodes:

@@ -336,12 +336,19 @@ class SystemState:
             raise ValueError("name must contain 1–80 characters.")
         raw_sensors = payload.get("sensors", ["mmWave"])
         if isinstance(raw_sensors, str):
-            sensors = [item.strip() for item in raw_sensors.split(",") if item.strip()]
+            sensor_values = raw_sensors.split(",")
         elif isinstance(raw_sensors, list):
-            sensors = [str(item).strip() for item in raw_sensors if str(item).strip()]
+            sensor_values = raw_sensors
         else:
             raise ValueError("sensors must be a list or comma-separated string.")
-        sensors = list(dict.fromkeys(sensors))
+        sensors = []
+        seen_sensors = set()
+        for item in sensor_values:
+            label = str(item).strip()
+            normalized_label = label.casefold()
+            if label and normalized_label not in seen_sensors:
+                sensors.append(label)
+                seen_sensors.add(normalized_label)
         if not sensors or len(sensors) > 12 or any(len(item) > 60 for item in sensors):
             raise ValueError("Provide between 1 and 12 sensor labels, each no longer than 60 characters.")
         position_values = (payload.get("x", 50), payload.get("y", 50))
