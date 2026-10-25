@@ -190,6 +190,20 @@ def test_ingest_rejects_non_finite_numbers(client, field, value):
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize(('field', 'value'), [
+    ('value', True),
+    ('value', '5.4'),
+    ('confidence', False),
+    ('confidence', '0.5'),
+])
+def test_ingest_requires_json_numbers_for_numeric_fields(client, field, value):
+    payload = {'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,'confidence':0.0}
+    payload[field] = value
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 400
+    assert response.json['error'] == 'value and confidence must be numeric.'
+
+
 def test_unknown_node_rejected(client):
     payload = {'node_id':'DOES-NOT-EXIST','sensor_type':'mmWave','value':5.4}
     response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})

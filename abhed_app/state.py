@@ -264,9 +264,14 @@ class SystemState:
             raise ValueError("node_id and sensor_type are required.")
         if len(node_id) > 40 or len(sensor_type) > 60:
             raise ValueError("node_id or sensor_type is too long.")
+        raw_value = payload.get("value", 0)
+        raw_confidence = payload.get("confidence", 0)
+        if (isinstance(raw_value, bool) or not isinstance(raw_value, (int, float))
+                or isinstance(raw_confidence, bool) or not isinstance(raw_confidence, (int, float))):
+            raise ValueError("value and confidence must be numeric.")
         try:
-            value = float(payload.get("value", 0))
-            confidence = float(payload.get("confidence", 0))
+            value = float(raw_value)
+            confidence = float(raw_confidence)
         except (TypeError, ValueError):
             raise ValueError("value and confidence must be numeric.")
         if not math.isfinite(value) or not (-1_000_000 <= value <= 1_000_000):
