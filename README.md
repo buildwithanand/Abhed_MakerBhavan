@@ -34,82 +34,58 @@ The system is intended as an operational prototype and integration scaffold for 
 
 ## Architecture
 
-ABHED separates sensor-specific acquisition from the dashboard service. Edge devices or an upstream adapter send normalised JSON to the Flask API; the API updates a thread-safe, in-memory state store. The browser fetches snapshots on a timer and sends operator actions back through the API. In demo mode, a background simulator updates the same state store. There is no database or server-push connection in the current implementation.
+ABHED is a small, single-process Flask application with three runtime areas: external clients, the web/API layer, and a shared in-memory state layer. Device-specific code acquires and normalises readings before sending them to the API. The Flask routes validate requests, update application state, and serve the dashboard and CSV export. The browser polls for snapshots and posts operator actions. In demo mode, a background simulator updates the same state. The current implementation has no database, message broker, or server-push connection; state is lost when the process stops.
 
 ```mermaid
-flowchart LR
-    subgraph Devices["Field devices and adapters"]
-        Sensors["Sensors and node firmware"]
-        Normalize["Device-side acquisition and normalization"]
+flowchart TB
+    subgraph Clients["Clients and field integrations"]
+        direction LR
+        Sensors["Sensors and node firmware"] --> Normalize["Device acquisition and normalization"]
+        Normalize -->|"JSON lines over serial"| Serial["Optional serial bridge"]
         Publisher["Sample publisher"]
-        Serial["JSON-lines serial bridge"]
-        Sensors --> Normalize
-        Normalize --> Serial
+        Browser["Operator browser<br/>dashboard"]
     end
 
-    subgraph Service["ABHED Flask service"]
-        App["Application factory<br/>run.py"]
-        Routes["HTTP routes<br/>HTML, API, CSV export"]
-        State[("SystemState<br/>thread-safe in-memory data")]
-        Simulator["Demo simulator<br/>background thread"]
-        App --> Routes
-        Routes <--> State
-        Simulator --> State
+    subgraph Backend["ABHED application process"]
+        direction TB
+        Startup["run.py<br/>configuration and startup"] --> Flask["Flask application<br/>application factory"]
+        Flask --> Routes["HTTP routes<br/>dashboard, REST API, CSV export"]
+        Routes <-->|"read and update"| State[("SystemState<br/>thread-safe in-memory state")]
+        Simulator["Demo simulator<br/>background thread"] -->|"demo updates"| State
     end
 
-    subgraph Browser["Operator browser"]
-        Page["Dashboard HTML, CSS, JavaScript"]
-        Operator["Operator<br/>reviews incidents and events"]
-        Operator --> Page
-    end
-
-    Normalize -->|"Normalized JSON + X-API-Key"| Routes
+    Normalize -->|"Optional direct HTTP"| Routes
     Serial -->|"POST /api/ingest/sensor"| Routes
     Publisher -->|"POST /api/ingest/sensor"| Routes
-    Routes -->|"Dashboard page and static assets"| Page
-    Page -->|"Poll GET /api/snapshot<br/>and send operator actions"| Routes
+    Browser -->|"GET /api/snapshot and operator actions"| Routes
+    Routes -->|"Dashboard HTML and static assets"| Browser
 ```
 
 ```mermaid
 sequenceDiagram
-    participant Node as Edge node or sample publisher
-    participant Bridge as Optional serial bridge
+    participant Client as Telemetry client
     participant API as ABHED API
-    participant Store as SystemState (memory)
+    participant State as In-memory state
     participant UI as Browser Dashboard
     actor Operator
 
-    alt Serial transport
-        Node->>Bridge: Newline-delimited normalized JSON
-        Bridge->>API: POST /api/ingest/sensor + X-API-Key
-    else Direct HTTP client
-        Node->>API: POST /api/ingest/sensor + X-API-Key
-    end
-    API->>API: Validate payload and check ingest key
-    API->>Store: Update node reading; append event
-    opt Detection meets configured threshold
-        API->>Store: Create incident candidate
-    end
-    alt Serial transport
-        API-->>Bridge: HTTP result
-    else Direct HTTP client
-        API-->>Node: HTTP result
-    end
-
+    Client->>API: POST /api/ingest/sensor with X-API-Key
+    API->>API: Authenticate and validate normalized payload
+    API->>State: Update node reading and append event
+    API->>State: Create candidate when detection qualifies
+    API-->>Client: HTTP response
     UI->>API: GET / (load dashboard)
     API-->>UI: HTML and static assets
-    loop Configured refresh interval
-        UI->>API: GET /api/snapshot
-        API->>Store: Read current state
-        Store-->>API: Nodes, incidents, events, config
-        API-->>UI: JSON snapshot
-    end
+    UI->>API: GET /api/snapshot on refresh interval
+    API->>State: Read current state
+    State-->>API: Nodes, incidents, events, configuration
+    API-->>UI: JSON snapshot
     Operator->>UI: Acknowledge or resolve candidate
     UI->>API: POST incident action
-    API->>Store: Update incident and append event
+    API->>State: Update incident and append event
     API-->>UI: Updated incident
     UI->>API: GET /api/export/events.csv (on export)
-    API->>Store: Read event history
+    API->>State: Read event history
     API-->>UI: CSV download
 ```
 
