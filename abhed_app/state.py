@@ -223,7 +223,10 @@ class SystemState:
                     raise ValueError("refresh_seconds must be between 2 and 15.")
                 self.refresh_seconds = refresh
             if "simulation_enabled" in payload:
-                self.simulation_enabled = bool(payload["simulation_enabled"])
+                simulation_enabled = payload["simulation_enabled"]
+                if not isinstance(simulation_enabled, bool):
+                    raise ValueError("simulation_enabled must be a boolean.")
+                self.simulation_enabled = simulation_enabled
                 self._add_event_unlocked("simulation_mode", "Simulation mode updated",
                                           f"Simulation mode {'enabled' if self.simulation_enabled else 'disabled'}.",
                                           "info", "SYS")
@@ -250,9 +253,11 @@ class SystemState:
             raise ValueError("value is outside the accepted range.")
         if not 0 <= confidence <= 1:
             raise ValueError("confidence must be between 0 and 1.")
+        if "detection" in payload and not isinstance(payload["detection"], bool):
+            raise ValueError("detection must be a boolean.")
         unit = str(payload.get("unit", ""))[:16]
         event_type = str(payload.get("event_type", "telemetry")).lower()
-        detection = bool(payload.get("detection", event_type == "detection"))
+        detection = payload.get("detection", event_type == "detection")
         classification = str(payload.get("classification", "unclassified_movement"))[:80]
         note = str(payload.get("note", "Sensor payload received"))[:200]
         with self.lock:

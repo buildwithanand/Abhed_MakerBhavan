@@ -42,6 +42,14 @@ def test_config_validation(client):
     assert good.status_code == 200
     bad = client.put('/api/config', json={'refresh_seconds': 99})
     assert bad.status_code == 400
+    invalid_simulation = client.put('/api/config', json={'simulation_enabled': 'false'})
+    assert invalid_simulation.status_code == 400
+
+
+def test_config_accepts_boolean_simulation_setting(client):
+    response = client.put('/api/config', json={'simulation_enabled': False})
+    assert response.status_code == 200
+    assert response.json['config']['simulation_enabled'] is False
 
 
 def test_ingest_requires_api_key(client):
@@ -57,6 +65,13 @@ def test_ingest_accepts_valid_payload(client):
     assert response.status_code == 201
     assert response.json['accepted'] is True
     assert response.json['node_id'] == 'ABH-N01'
+
+
+def test_ingest_requires_boolean_detection_flag(client):
+    payload = {'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,'detection':'false'}
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 400
+    assert response.json['error'] == 'detection must be a boolean.'
 
 
 def test_unknown_node_rejected(client):
