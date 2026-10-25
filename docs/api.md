@@ -28,7 +28,7 @@ Registers a node in the in-memory registry. New nodes start as `offline` until t
 }
 ```
 
-`id` must be unique and 2–40 characters using letters, numbers, underscores, or hyphens. `name` must be 1–80 characters. `sensors` can be a list or comma-separated string with 1–12 labels. `x` and `y` are integer positions from 0–100 on the schematic (not geographic coordinates).
+`id` must be unique and 2–40 characters using letters, numbers, underscores, or hyphens. IDs are stored in uppercase, and node lookups are case-insensitive. `name` must be 1–80 characters. `sensors` can be a list or comma-separated string with 1–12 labels. `x` and `y` are integer positions from 0–100 on the schematic (not geographic coordinates).
 
 ## `GET /api/incidents?status=active`
 

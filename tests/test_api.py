@@ -208,6 +208,22 @@ def test_register_node_and_ingest_first_heartbeat(client):
     assert node['status'] == 'online'
 
 
+def test_node_ids_are_normalized_and_lookups_ignore_case(client):
+    created = client.post('/api/nodes', json={'id':'abh-n10','name':'Case test','sensors':['mmWave']})
+    assert created.status_code == 201
+    assert created.json['node']['id'] == 'ABH-N10'
+
+    payload = {'node_id':'abh-n10','sensor_type':'mmWave','value':2.0}
+    ingested = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert ingested.status_code == 201
+    assert ingested.json['node_id'] == 'ABH-N10'
+    assert client.post('/api/nodes/abh-n10/self-test').status_code == 200
+    changed_status = client.post('/api/nodes/abh-n10/status', json={'status':'degraded'})
+    assert changed_status.status_code == 200
+    node = next(node for node in client.get('/api/nodes').json if node['id'] == 'ABH-N10')
+    assert node['status'] == 'degraded'
+
+
 def test_duplicate_node_rejected(client):
     created = client.post('/api/nodes', json={'id':'ABH-N01','name':'Duplicate','sensors':['mmWave']})
     assert created.status_code == 400

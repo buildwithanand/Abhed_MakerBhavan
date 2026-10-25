@@ -195,13 +195,13 @@ class SystemState:
 
     def self_test(self, node_id: str) -> dict[str, Any] | None:
         with self.lock:
-            node = next((item for item in self.nodes if item["id"] == node_id), None)
+            node = next((item for item in self.nodes if item["id"].casefold() == node_id.casefold()), None)
             if not node:
                 return None
             node["last_self_test"] = f"Passed · {utc_now()}"
             self._add_event_unlocked("self_test", "Node self-test completed",
-                                      f"{node_id} · dashboard API action completed; physical sensor path not tested.",
-                                      "success", node_id)
+                                      f"{node['id']} · dashboard API action completed; physical sensor path not tested.",
+                                      "success", node["id"])
             return copy.deepcopy(node)
 
     def update_config(self, payload: dict[str, Any]) -> dict[str, Any]:
@@ -258,7 +258,7 @@ class SystemState:
 
     def ingest(self, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         """Accept one normalised node reading. Returns (accepted data, incident_created)."""
-        node_id = str(payload.get("node_id", "")).strip()
+        node_id = str(payload.get("node_id", "")).strip().upper()
         sensor_type = str(payload.get("sensor_type", "")).strip()
         if not node_id or not sensor_type:
             raise ValueError("node_id and sensor_type are required.")
@@ -289,7 +289,7 @@ class SystemState:
         classification = str(payload.get("classification", "unclassified_movement"))[:80]
         note = str(payload.get("note", "Sensor payload received"))[:200]
         with self.lock:
-            node = next((item for item in self.nodes if item["id"] == node_id), None)
+            node = next((item for item in self.nodes if item["id"].casefold() == node_id.casefold()), None)
             if not node:
                 raise KeyError("Unknown node_id. Add the node to the registry before ingesting readings.")
             reading = {"sensor": sensor_type, "metric": str(payload.get("metric", sensor_type))[:60],
@@ -328,7 +328,7 @@ class SystemState:
 
     def add_node(self, payload: dict[str, Any]) -> dict[str, Any]:
         import re
-        node_id = str(payload.get("id", payload.get("node_id", ""))).strip()
+        node_id = str(payload.get("id", payload.get("node_id", ""))).strip().upper()
         name = str(payload.get("name", payload.get("location", ""))).strip()
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{1,39}", node_id):
             raise ValueError("id must be 2–40 characters using letters, numbers, underscores, or hyphens.")
@@ -380,7 +380,7 @@ class SystemState:
 
     def set_node_status(self, node_id: str, status: str) -> bool:
         with self.lock:
-            node = next((item for item in self.nodes if item["id"] == node_id), None)
+            node = next((item for item in self.nodes if item["id"].casefold() == node_id.casefold()), None)
             if not node:
                 return False
             if status not in {"online", "degraded", "offline"}:
@@ -388,8 +388,8 @@ class SystemState:
             node["status"] = status
             if status != "offline":
                 node["last_seen"] = utc_now()
-            self._add_event_unlocked("node_status", "Node status changed", f"{node_id} · status is now {status}.",
-                                      "warning" if status != "online" else "success", node_id)
+            self._add_event_unlocked("node_status", "Node status changed", f"{node['id']} · status is now {status}.",
+                                      "warning" if status != "online" else "success", node["id"])
             return True
 
     def export_events(self) -> list[dict[str, Any]]:
