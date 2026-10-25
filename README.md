@@ -34,35 +34,86 @@ The system is intended as an operational prototype and integration scaffold for 
 
 ## Architecture
 
+ABHED separates sensor-specific acquisition from the dashboard service. Edge devices or an upstream adapter send normalised JSON to the Flask API; the API updates a thread-safe, in-memory state store. The browser fetches snapshots on a timer and sends operator actions back through the API. In demo mode, a background simulator updates the same state store. There is no database or server-push connection in the current implementation.
+
 ```mermaid
 flowchart LR
-    A[Edge Sensors / Firmware] --> B[Normalisation Layer]
-    B --> C[Trusted Gateway / Serial Bridge]
-    C --> D[ABHED Flask API]
-    D --> E[(In-memory state)]
-    D --> F[Dashboard / Operator UI]
-    F --> G[Incident Review + Event Timeline]
-    G --> H[CSV Export / Audit Trail]
+    subgraph Devices["Field devices and adapters"]
+        Sensors["Sensors and node firmware"]
+        Normalize["Device-side acquisition and normalization"]
+        Publisher["Sample publisher"]
+        Serial["JSON-lines serial bridge"]
+        Sensors --> Normalize
+        Normalize --> Serial
+    end
+
+    subgraph Service["ABHED Flask service"]
+        App["Application factory<br/>run.py"]
+        Routes["HTTP routes<br/>HTML, API, CSV export"]
+        State[("SystemState<br/>thread-safe in-memory data")]
+        Simulator["Demo simulator<br/>background thread"]
+        App --> Routes
+        Routes <--> State
+        Simulator --> State
+    end
+
+    subgraph Browser["Operator browser"]
+        Page["Dashboard HTML, CSS, JavaScript"]
+        Operator["Operator<br/>reviews incidents and events"]
+        Operator --> Page
+    end
+
+    Normalize -->|"Normalized JSON + X-API-Key"| Routes
+    Serial -->|"POST /api/ingest/sensor"| Routes
+    Publisher -->|"POST /api/ingest/sensor"| Routes
+    Routes -->|"Dashboard page and static assets"| Page
+    Page -->|"Poll GET /api/snapshot<br/>and send operator actions"| Routes
 ```
 
 ```mermaid
 sequenceDiagram
-    participant Sensor as Sensor / Edge Device
-    participant Bridge as Gateway or Serial Bridge
+    participant Node as Edge node or sample publisher
+    participant Bridge as Optional serial bridge
     participant API as ABHED API
-    participant Store as State + Event Log
+    participant Store as SystemState (memory)
     participant UI as Browser Dashboard
+    actor Operator
 
-    Sensor->>Bridge: Normalised telemetry payload
-    Bridge->>API: POST /api/ingest/sensor
-    API->>Store: Validate + persist node reading
-    API->>Store: Create incident if threshold exceeded
-    Store-->>UI: Snapshot updates
-    UI->>API: GET /api/snapshot
-    Operator->>UI: Acknowledge / resolve incident
-    UI->>API: Incident action request
-    API->>Store: Append event and operator note
+    alt Serial transport
+        Node->>Bridge: Newline-delimited normalized JSON
+        Bridge->>API: POST /api/ingest/sensor + X-API-Key
+    else Direct HTTP client
+        Node->>API: POST /api/ingest/sensor + X-API-Key
+    end
+    API->>API: Validate payload and check ingest key
+    API->>Store: Update node reading; append event
+    opt Detection meets configured threshold
+        API->>Store: Create incident candidate
+    end
+    alt Serial transport
+        API-->>Bridge: HTTP result
+    else Direct HTTP client
+        API-->>Node: HTTP result
+    end
+
+    UI->>API: GET / (load dashboard)
+    API-->>UI: HTML and static assets
+    loop Configured refresh interval
+        UI->>API: GET /api/snapshot
+        API->>Store: Read current state
+        Store-->>API: Nodes, incidents, events, config
+        API-->>UI: JSON snapshot
+    end
+    Operator->>UI: Acknowledge or resolve candidate
+    UI->>API: POST incident action
+    API->>Store: Update incident and append event
+    API-->>UI: Updated incident
+    UI->>API: GET /api/export/events.csv (on export)
+    API->>Store: Read event history
+    API-->>UI: CSV download
 ```
+
+The serial bridge is optional and only forwards complete, normalized JSON lines; it does not decode device-specific sensor protocols. The simulator is for demonstrations and tests, not live sensing.
 
 ## Repository structure
 
