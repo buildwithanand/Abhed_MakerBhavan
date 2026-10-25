@@ -1,3 +1,5 @@
+import csv
+import io
 import time
 
 import pytest
@@ -34,6 +36,17 @@ def test_snapshot_contains_nodes_and_incidents(client):
 def test_events_rejects_invalid_limit(client, limit):
     response = client.get(f'/api/events?limit={limit}')
     assert response.status_code == 400
+
+
+def test_csv_export_neutralizes_spreadsheet_formulas(client):
+    state = client.application.extensions['abhed_state']
+    state.add_event('test', '=1+1', '  @SUM(1,1)', 'info', 'SYS')
+
+    response = client.get('/api/export/events.csv')
+    rows = list(csv.DictReader(io.StringIO(response.get_data(as_text=True))))
+
+    assert rows[0]['title'] == "'=1+1"
+    assert rows[0]['message'] == "'  @SUM(1,1)"
 
 
 def test_incident_acknowledge_and_resolve(client):

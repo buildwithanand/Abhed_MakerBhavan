@@ -16,6 +16,12 @@ def _json_body() -> dict:
     return body if isinstance(body, dict) else {}
 
 
+def _spreadsheet_safe(value: str) -> str:
+    if value.lstrip().startswith(("=", "+", "-", "@")):
+        return "'" + value
+    return value
+
+
 def register_routes(app) -> None:
     @app.get("/api/snapshot")
     def snapshot():
@@ -127,6 +133,9 @@ def register_routes(app) -> None:
         fields = ["id", "timestamp", "type", "severity", "source", "title", "message"]
         writer = csv.DictWriter(buffer, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows({
+            field: _spreadsheet_safe(str(row.get(field, "")))
+            for field in fields
+        } for row in rows)
         return Response(buffer.getvalue(), mimetype="text/csv",
                         headers={"Content-Disposition": "attachment; filename=abhed-events.csv"})
