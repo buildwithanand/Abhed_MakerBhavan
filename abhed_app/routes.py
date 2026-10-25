@@ -88,9 +88,12 @@ def register_routes(app) -> None:
     @app.post("/api/incidents/<incident_id>/resolve")
     def resolve(incident_id: str):
         body = _json_body()
-        result = _state().resolve_incident(incident_id,
-                                           str(body.get("operator", "Duty operator")),
-                                           str(body.get("note", "")))
+        try:
+            result = _state().resolve_incident(incident_id,
+                                               str(body.get("operator", "Duty operator")),
+                                               str(body.get("note", "")))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 409
         if result is None:
             return jsonify({"error": "Incident not found."}), 404
         return jsonify({"ok": True, "incident": result})

@@ -163,8 +163,10 @@ class SystemState:
             incident = next((item for item in self.incidents if item["id"] == incident_id), None)
             if not incident:
                 return None
-            if incident["status"] == "resolved":
-                raise ValueError("Resolved incidents cannot be acknowledged.")
+            if incident["status"] != "active":
+                if incident["status"] == "resolved":
+                    raise ValueError("Resolved incidents cannot be acknowledged.")
+                raise ValueError("Incident has already been acknowledged.")
             incident["status"] = "acknowledged"
             incident["acknowledged_by"] = operator[:80]
             incident["updated_at"] = utc_now()
@@ -178,6 +180,8 @@ class SystemState:
             incident = next((item for item in self.incidents if item["id"] == incident_id), None)
             if not incident:
                 return None
+            if incident["status"] == "resolved":
+                raise ValueError("Incident has already been resolved.")
             incident["status"] = "resolved"
             incident["resolved_at"] = utc_now()
             incident["updated_at"] = incident["resolved_at"]

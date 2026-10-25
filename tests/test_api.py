@@ -59,6 +59,21 @@ def test_incident_acknowledge_and_resolve(client):
     assert resolved.json['incident']['status'] == 'resolved'
 
 
+def test_incident_transitions_reject_duplicate_actions(client):
+    active = next(i for i in client.get('/api/incidents').json if i['status'] == 'active')
+    incident_id = active['id']
+
+    assert client.post(f'/api/incidents/{incident_id}/acknowledge').status_code == 200
+    duplicate_ack = client.post(f'/api/incidents/{incident_id}/acknowledge')
+    assert duplicate_ack.status_code == 409
+    assert duplicate_ack.json['error'] == 'Incident has already been acknowledged.'
+
+    assert client.post(f'/api/incidents/{incident_id}/resolve').status_code == 200
+    duplicate_resolve = client.post(f'/api/incidents/{incident_id}/resolve')
+    assert duplicate_resolve.status_code == 409
+    assert duplicate_resolve.json['error'] == 'Incident has already been resolved.'
+
+
 def test_config_validation(client):
     good = client.put('/api/config', json={'refresh_seconds': 5, 'detection_threshold': 0.8})
     assert good.status_code == 200
