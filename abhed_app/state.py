@@ -219,9 +219,14 @@ class SystemState:
                 if not math.isfinite(detection_threshold) or not 0.1 <= detection_threshold <= 0.99:
                     raise ValueError("detection_threshold must be between 0.10 and 0.99.")
             if "refresh_seconds" in payload:
+                requested_refresh = payload["refresh_seconds"]
+                if isinstance(requested_refresh, bool):
+                    raise ValueError("refresh_seconds must be an integer.")
                 try:
-                    refresh_seconds = int(payload["refresh_seconds"])
+                    refresh_seconds = int(requested_refresh)
                 except (TypeError, ValueError):
+                    raise ValueError("refresh_seconds must be an integer.")
+                if isinstance(requested_refresh, float) and requested_refresh != refresh_seconds:
                     raise ValueError("refresh_seconds must be an integer.")
                 if not 2 <= refresh_seconds <= 15:
                     raise ValueError("refresh_seconds must be between 2 and 15.")

@@ -67,6 +67,13 @@ def test_config_accepts_boolean_simulation_setting(client):
     assert response.json['config']['simulation_enabled'] is False
 
 
+@pytest.mark.parametrize('refresh_seconds', [2.5, True])
+def test_config_rejects_non_integer_refresh_interval(client, refresh_seconds):
+    response = client.put('/api/config', json={'refresh_seconds': refresh_seconds})
+    assert response.status_code == 400
+    assert response.json['error'] == 'refresh_seconds must be an integer.'
+
+
 def test_invalid_config_update_does_not_partially_apply(client):
     original_config = client.get('/api/config').json
     response = client.put('/api/config', json={
