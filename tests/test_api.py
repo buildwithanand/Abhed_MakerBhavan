@@ -151,6 +151,32 @@ def test_ingest_rejects_unsupported_event_type(client, event_type):
     assert response.json['error'] == 'event_type must be telemetry or detection.'
 
 
+@pytest.mark.parametrize(('event_type', 'detection'), [
+    ('telemetry', True),
+    ('detection', False),
+])
+def test_ingest_rejects_conflicting_detection_metadata(client, event_type, detection):
+    payload = {
+        'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,
+        'event_type':event_type,'detection':detection,
+    }
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 400
+    assert response.json['error'] == 'event_type and detection must agree.'
+
+
+def test_ingest_infers_detection_event_type_when_omitted(client):
+    payload = {
+        'node_id':'ABH-N01','sensor_type':'mmWave','value':5.4,
+        'detection':True,'confidence':0.9,
+        'classification':'inferred_detection_test',
+    }
+    response = client.post('/api/ingest/sensor', json=payload, headers={'X-API-Key':'test-secret-key'})
+    assert response.status_code == 201
+    assert response.json['detection'] is True
+    assert response.json['incident_created'] is True
+
+
 @pytest.mark.parametrize(('field', 'value'), [
     ('value', float('nan')),
     ('value', float('inf')),

@@ -133,7 +133,7 @@ Fields:
 - `value` (required number; defaults to zero if omitted): between -1,000,000 and 1,000,000. The backend does not know if the unit is physically correct.
 - `unit` (optional string): short unit label.
 - `metric` (optional string): display name for the reading.
-- `event_type` (optional string): `telemetry` or `detection` are the usual values.
+- `event_type` (optional string): must be `telemetry` or `detection`. When both `event_type` and `detection` are supplied, they must agree. If omitted, the event type is inferred from `detection`.
 - `detection` (optional boolean): whether this reading is a candidate detection.
 - `confidence` (optional number): 0–1, and only meaningful if calibrated by the producing model/algorithm.
 - `classification` and `note` (optional strings): limited-length descriptive metadata.

@@ -276,10 +276,15 @@ class SystemState:
         if "detection" in payload and not isinstance(payload["detection"], bool):
             raise ValueError("detection must be a boolean.")
         unit = str(payload.get("unit", ""))[:16]
-        event_type = payload.get("event_type", "telemetry")
-        if not isinstance(event_type, str) or event_type.lower() not in {"telemetry", "detection"}:
-            raise ValueError("event_type must be telemetry or detection.")
-        event_type = event_type.lower()
+        if "event_type" in payload:
+            event_type = payload["event_type"]
+            if not isinstance(event_type, str) or event_type.lower() not in {"telemetry", "detection"}:
+                raise ValueError("event_type must be telemetry or detection.")
+            event_type = event_type.lower()
+            if "detection" in payload and payload["detection"] != (event_type == "detection"):
+                raise ValueError("event_type and detection must agree.")
+        else:
+            event_type = "detection" if payload.get("detection", False) else "telemetry"
         detection = payload.get("detection", event_type == "detection")
         classification = str(payload.get("classification", "unclassified_movement"))[:80]
         note = str(payload.get("note", "Sensor payload received"))[:200]
