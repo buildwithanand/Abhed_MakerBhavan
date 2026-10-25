@@ -1,0 +1,32 @@
+Ref,Part / Module,Vendor,Qty,Notes
+U1,NVIDIA Jetson Orin NX 16 GB + compatible carrier,NVIDIA / selected carrier vendor,1,"AI inference host; exact carrier determines camera connectors, UART VIO, USB budget and VIN."
+U3,STM32H743ZIT6 LQFP-144,STMicroelectronics,1,Real-time I/O and supervisory MCU; pin map assumes exact LQFP-144 order code.
+U4,TXU0202 or equivalent dual UART level translator,TI / selected vendor,1,Use only after confirming carrier UART logic level and direction; VCCA from carrier VIO or dedicated 1.8 V supply.
+U5,TPS3823 watchdog (exact variant TBD),Texas Instruments,1,Select timeout/reset variant; connect WDI and reset to MCU NRST per the chosen part datasheet.
+U7,INA826 instrumentation amplifier,Texas Instruments,1,Geophone differential front end; gain resistor RG and input protection require bench validation.
+U8,ADS131M02 24-bit SPI ADC (TSSOP-20 reference),Texas Instruments,1,"Reads conditioned geophone signal; include 8.192 MHz clock, decoupling and DRDY/RESET wiring."
+U9,TLV9002 or equivalent rail-to-rail op-amp,TI / selected vendor,1,"Buffers VREF_MID; verify supply range, output swing, noise and stability in final topology."
+Y1,8.192 MHz CMOS oscillator,Selected vendor,1,Clock source for ADS131M02 CLKIN; confirm voltage compatibility and datasheet recommendations.
+J1/J2,TI IWR6843ISK / IWRL6432BOOST EVMs,Texas Instruments,1 each,Development evaluation boards over USB; not equivalent to production rugged radar assemblies.
+J3,Arducam IMX462 STARVIS camera module,Arducam,1,"Exact SKU, lens, CSI lane count, connector and I/O voltage to be confirmed."
+J4,FLIR Boson 320 or 640 + interface board,Teledyne FLIR OEM,1,Select exact core/interface accessory and video/control/power interface.
+J5 / GEO1,SM-24 geophone + connector,Selected vendor,1,Differential passive sensor; gain/filter values set only after output and bandwidth measurements.
+J6 / MIC1,Infineon IM73D122V01 PDM microphone / module,Infineon / selected module vendor,1,"Bare IC requires proper footprint, acoustic port, SELECT strap and local 100 nF bypass."
+J7 / S1,BMP180 pressure/temperature module,Bosch/module vendor,1 optional,I2C1 context sensor; confirm module voltage and pull-ups.
+J7 / S2,MPU6050 IMU module,TDK InvenSense/module vendor,1 optional,I2C1 node orientation/impact sensing; AD0 low gives address 0x68.
+J8 / S3,DS3231 RTC module,Analog Devices/module vendor,1 optional,Separate I2C4 bus; confirm module power/pull-up arrangement.
+J9,Pan/tilt motor driver and actuators,Selected vendor,1 set optional,"Use dedicated actuator rail, stall-current sizing, limit strategy and fail-safe positioning."
+J10,SWD service header,Selected vendor,1,"3V3 reference, GND, SWDIO, SWCLK and NRST for programming/debug."
+J11,Ethernet/fibre interface,Selected carrier/switch vendor,1,Exact RJ45 PHY/magnetics or SFP interface depends on chosen carrier and network equipment.
+J12 / PS1,"Battery, protection, DC/DC, optional PV/MPPT",Selected power vendor,TBD,"Subsystem rather than a single part; size for Jetson peak draw, EVM USB loads and actuator stall current."
+R1,0 ohm analog/digital ground star link,Selected resistor / net-tie implementation,1,Single-point AGND-to-GND_SYS link near ADC; validate grounding/EMC layout.
+R2,100 kOhm BOOT0 pull-down,Selected resistor,1,Straps BOOT0 low for normal boot.
+R3,10 kOhm NRST pull-up,Selected resistor,1,NRST default-high pull-up; watchdog may pull low.
+C1/C2,"2.2 uF ceramic, VCAP1 and VCAP2",Selected capacitor,2,One capacitor per STM32 VCAP pin; do not use these rails for external loads.
+C4,4.7 uF MCU rail bulk capacitor,Selected capacitor,1,Local bulk capacitance supplements individual 100 nF VDD decouplers.
+C10-C20,100 nF ceramic MCU VDD decouplers,Selected capacitors,11,Place one close to each STM32 VDD pin; individual placement and exact VDD count must match the final package/datasheet.
+C5,100 nF VREF+ decoupling,Selected capacitor,1,Place close to STM32 VREF+ pin and analog ground.
+C6,220 nF ADS131M02 CAP capacitor,Selected capacitor,1,Connect CAP pin to DGND as specified by datasheet.
+C7/C8,1 uF AVDD/DVDD bypass capacitors,Selected capacitors,2,Place separately near ADS131M02 AVDD and DVDD pins.
+C9,100 nF PDM microphone bypass,Selected capacitor,1,Place directly at microphone supply pins.
+A1,Geophone + ADC functional subsystem,Reference block only,1,"Functional grouping in the integration sheet; real circuits are U7, U8, U9 and Y1."

@@ -1,0 +1,19 @@
+Net / Bus,Source,Destination,Implementation notes
+USB1_DP/DN/VBUS/GND,Jetson carrier USB host port 1 with current-limited VBUS,TI IWR6843ISK EVM USB,USB2 D+/D- differential pair; per-port VBUS protection/current budget; prevent backfeed
+USB2_DP/DN/VBUS/GND,Jetson carrier USB host port 2 with current-limited VBUS,TI IWRL6432BOOST EVM USB,USB2 D+/D- differential pair; per-port VBUS protection/current budget; prevent backfeed
+USB3_DP/DN/VBUS/GND,Selected carrier USB host port / approved interface,FLIR Boson interface board if USB is selected,Interface and video mode are SKU-specific; do not assume every Boson core is USB-native
+RGB_CSI2,Carrier CSI-2 clock/data lanes + camera I2C/reset,Arducam IMX462 STARVIS module,"Exact connector, lane count, power and logic levels must be confirmed"
+MCU_UART_TX/RX,STM32H743ZIT6 PA9/PA10 through U4 level translator,Jetson carrier UART RX/TX,Carrier UART VIO often differs from MCU 3.3 V; use the carrier VIO or a suitable translator supply
+GEO_DIFF,J5 SM-24 GEO_INP/GEO_INN and shield,U7 INA826 -> anti-alias network -> U8 ADS131M02,Shield termination and analog ground strategy depend on enclosure/PCB EMC design
+ADC_CLKIN,Y1 8.192 MHz CMOS oscillator,U8 ADS131M02 CLKIN,"Confirm oscillator supply, output level and clock requirements against the selected ADC mode"
+SPI2_ADC,STM32 PB12/PB13/PB14/PB15,U8 ADS131M02 CS/SCLK/DOUT/DIN,"SPI mode 1; confirm datasheet timing, DRDY interrupt and reset behavior"
+ADC_DRDY/RESET,STM32 PG2/PG3,U8 ADS131M02 DRDY_N and SYNC/RESET_N,Active-low signals; establish safe startup states
+PDM_CLK/DATA,STM32 PB0/PC5 configured for DFSDM/PDM,J6 Infineon IM73D122V01 module,SELECT tied low for single-channel mode; 100 nF at supply; keep traces short
+I2C1,STM32 PB8/PB9,J7 BMP180 + MPU6050,3.3 V pull-ups; BMP180 0x77 and MPU6050 0x68 by default if AD0=GND
+I2C4,STM32 PD12/PD13,J8 DS3231 RTC,Separate bus to avoid default address overlap with MPU6050
+PAN/TILT_PWM,STM32 PA8/PA0,J9 servo or motor-driver inputs,Dedicated actuator supply and return; no motor connected directly to MCU GPIO
+WATCHDOG_RESET,STM32 PC9 WDI and NRST,U5 TPS3823 watchdog,"Exact watchdog variant defines timeout, reset polarity and pinout"
+SWD,STM32 PA13/PA14/NRST/3V3/GND,J10 SWD header,Preserve access for firmware programming and recovery
+ETHERNET,Jetson carrier Ethernet interface,J11 industrial switch / fibre uplink,Use exact carrier PHY/magnetics and approved fibre hardware
+POWER_ENTRY,"J12 BAT_IN, GND, optional PV_IN, chassis",PS1 protected battery bus / optional MPPT charger,12 V nominal bus is a design assumption; all rails and current limits require final load analysis
+POWER_RAILS,Protected battery bus through DC/DC regulators,"Jetson carrier VIN, USB VBUS switches, 3V3 logic, AFE and actuator rail",Do not apply raw battery voltage to Jetson module; follow carrier VIN requirements

@@ -1,0 +1,29 @@
+Net / Function,STM32H743ZIT6 Pin Name / AF,LQFP-144 Pin Number,Direction,Destination,Notes
+USART1_TX,PA9,101,Output,Jetson UART RX through level translator,3.3 V MCU side
+USART1_RX,PA10,102,Input,Jetson UART TX through level translator,3.3 V MCU side
+PDM_CLK,PB0 / DFSDM_CKOUT,46,Output,IM73D122V01 clock input,Check DFSDM clock-out configuration
+PDM_DATA,PC5 / DFSDM_DATIN2,45,Input,IM73D122V01 DATA output,Mic SELECT tied to GND for single channel
+ADC_CS_N,PB12 / SPI2_NSS,73,Output,ADS131M02 CS pin 10 (WQFN) / 12 (TSSOP),SPI mode 1
+ADC_SCLK,PB13 / SPI2_SCK,74,Output,ADS131M02 SCLK pin 12 (WQFN) / 14 (TSSOP),SPI mode 1
+ADC_DOUT,PB14 / SPI2_MISO,75,Input,ADS131M02 DOUT pin 13 (WQFN) / 15 (TSSOP),Data-ready interrupt recommended
+ADC_DIN,PB15 / SPI2_MOSI,76,Output,ADS131M02 DIN pin 14 (WQFN) / 16 (TSSOP),
+ADC_DRDY_N,PG2 / GPIO EXTI,87,Input,ADS131M02 DRDY pin 11 (WQFN) / 13 (TSSOP),Active low
+ADC_SYNC_RESET_N,PG3 / GPIO,88,Output,ADS131M02 SYNC/RESET pin 9 (WQFN) / 11 (TSSOP),Active low
+I2C1_SCL,PB8 / I2C1_SCL,139,Open-drain,BMP180 + MPU6050,4.7 kOhm pull-up to 3V3; modules may have pull-ups
+I2C1_SDA,PB9 / I2C1_SDA,140,Open-drain,BMP180 + MPU6050,Addresses: BMP180 0x77; MPU6050 0x68 if AD0=GND
+I2C4_SCL,PD12 / I2C4_SCL,81,Open-drain,DS3231 RTC,Separate bus due to MPU6050 default address 0x68
+I2C4_SDA,PD13 / I2C4_SDA,82,Open-drain,DS3231 RTC,Separate bus due to MPU6050 default address 0x68
+PAN_PWM,PA8 / TIM1_CH1,100,Output,Pan actuator / servo driver input,Separate high-current supply
+TILT_PWM,PA0 / TIM2_CH1,34,Output,Tilt actuator / servo driver input,Separate high-current supply
+WATCHDOG_FEED,PC9 / GPIO,99,Output,TPS3823 WDI,Choose pulse interval per watchdog variant
+NRST,NRST,25,Input/Output,Watchdog reset and manual reset,10 kOhm pull-up to 3V3
+SWDIO,PA13 / JTMS-SWDIO,105,Bidirectional,SWD debug header,
+SWCLK,PA14 / JTCK-SWCLK,109,Input,SWD debug header,
+BOOT0,BOOT0,138,Input,Boot-mode strap,100 kOhm pull-down to GND
+PDR_ON,PDR_ON,143,Input,Brownout/power-down reset enable,Tie to 3V3 to enable internal PDR
+VCAP1,VCAP1,71,Power out,Core regulator decoupling,2.2 uF ceramic to GND; do not load
+VCAP2,VCAP2,106,Power out,Core regulator decoupling,2.2 uF ceramic to GND; do not load
+VDDA_MCU,VDDA,33,Power input,MCU analog supply,3V3_A via low-noise link; decouple locally
+VSSA_MCU,VSSA,31,Power return,MCU analog ground,AGND return; R1 single-point tie to GND_SYS
+VREF_MCU,VREF+,32,Reference input,MCU ADC reference,3V3_A in this reference; fit C5 to AGND close to pin
+VDD33USB_MCU,VDD33USB,95,Power input,USB-related MCU supply pin,3V3_LOGIC with local decoupling per ST datasheet
