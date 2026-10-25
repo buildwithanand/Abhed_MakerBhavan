@@ -2,6 +2,10 @@
 
 This repo defines the dashboard and transport contract, not a complete driver set for every ABHED sensor. Build and verify each device acquisition path against the manufacturer's current documentation before connecting it.
 
+## Hardware reference files
+
+The draft bill of materials, connection schedule, and STM32 pin map are in [`../hardware/electrical/`](../hardware/electrical/). The node enclosure model is in [`../hardware/mechanical/`](../hardware/mechanical/). These are design references; validate all parts, pin assignments, electrical levels, and mechanical dimensions against the selected hardware before fabrication or connection.
+
 ## Suggested edge-node responsibilities
 
 An ABHED prototype may use an Arduino UNO Q, STM32H743-class MCU, Raspberry Pi camera module, MLX90640 thermal array, DFRobot C4001 mmWave sensor, geophone, and digital microphone. The actual split depends on which board can access each bus and whether the device has the necessary OS/driver support.

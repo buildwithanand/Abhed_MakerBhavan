@@ -68,31 +68,47 @@ sequenceDiagram
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── tests.yml            # CI test workflow
 ├── abhed_app/
-│   ├── routes.py              # Flask routes and API logic
-│   ├── simulator.py           # Demo simulation and telemetry generation
-│   ├── state.py               # In-memory node/incident/event state
-│   ├── static/                # CSS, JavaScript, static assets
-│   └── templates/             # Dashboard HTML templates
+│   ├── __init__.py              # Flask application factory
+│   ├── routes.py                # Flask routes and API logic
+│   ├── simulator.py             # Demo simulation and telemetry generation
+│   ├── state.py                 # In-memory node/incident/event state
+│   ├── static/                  # CSS, JavaScript, and static assets
+│   └── templates/               # Dashboard HTML templates
 ├── docs/
-│   ├── api.md                 # API reference and payload examples
-│   ├── architecture.md        # Design notes and deployment guidance
-│   ├── hardware-integration.md
-│   └── openapi.yaml           # OpenAPI spec
+│   ├── api.md                   # API reference and payload examples
+│   ├── architecture.md          # Design notes and deployment guidance
+│   ├── hardware-integration.md  # Hardware integration guidance
+│   └── openapi.yaml             # OpenAPI specification
+├── hardware/
+│   ├── electrical/
+│   │   ├── ABHED_BOM_Draft.csv
+│   │   ├── ABHED_Net_Connection_Schedule.csv
+│   │   └── ABHED_STM32_Pin_Map.csv
+│   └── mechanical/
+│       └── ABHEDH_Node.stl
 ├── scripts/
-│   ├── publish_sample.py      # Example sensor publisher
-│   └── serial_bridge.py       # JSON-lines serial adapter
+│   ├── publish_sample.py        # Example sensor publisher
+│   └── serial_bridge.py         # JSON-lines serial adapter
 ├── tests/
-│   └── ...                    # API and workflow validation tests
-├── .env.example               # Sample environment file
-├── requirements.txt           # Python dependencies
-├── run.py                     # Application startup entry point
-├── LICENSE                    # MIT license
-├── README.md                  # Project documentation
-├── SECURITY.md                # Security reporting guidance
-├── Makefile                   # Common local commands
-└── state/                     # Local runtime state or temporary artifacts
+│   └── test_api.py              # API and workflow tests
+├── .editorconfig                # Editor formatting defaults
+├── .env.example                 # Sample environment file
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
+├── Makefile                     # Common local commands
+├── pytest.ini                   # Pytest configuration
+├── README.md                    # Project documentation
+├── requirements.txt             # Python dependencies
+├── run.py                       # Application startup entry point
+└── SECURITY.md                  # Security reporting guidance
 ```
+
+Hardware reference files are grouped by type: the bill of materials and electrical connection/pin tables are in [`hardware/electrical/`](hardware/electrical/), and 3D mechanical models are in [`hardware/mechanical/`](hardware/mechanical/). Runtime application state is currently held in memory and is not stored in a repository data directory.
 
 ## Quick start
 
