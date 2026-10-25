@@ -119,44 +119,35 @@ The serial bridge is optional and only forwards complete, normalized JSON lines;
 
 ```text
 .
-├── .github/
-│   └── workflows/
-│       └── tests.yml            # CI test workflow
-├── abhed_app/
-│   ├── __init__.py              # Flask application factory
-│   ├── routes.py                # Flask routes and API logic
-│   ├── simulator.py             # Demo simulation and telemetry generation
-│   ├── state.py                 # In-memory node/incident/event state
-│   ├── static/                  # CSS, JavaScript, and static assets
-│   └── templates/               # Dashboard HTML templates
-├── docs/
-│   ├── api.md                   # API reference and payload examples
-│   ├── architecture.md          # Design notes and deployment guidance
-│   ├── hardware-integration.md  # Hardware integration guidance
-│   └── openapi.yaml             # OpenAPI specification
-├── hardware/
-│   ├── electrical/
-│   │   ├── ABHED_BOM_Draft.csv
-│   │   ├── ABHED_Net_Connection_Schedule.csv
-│   │   └── ABHED_STM32_Pin_Map.csv
-│   └── mechanical/
-│       └── ABHEDH_Node.stl
-├── scripts/
-│   ├── publish_sample.py        # Example sensor publisher
-│   └── serial_bridge.py         # JSON-lines serial adapter
-├── tests/
-│   └── test_api.py              # API and workflow tests
-├── .editorconfig                # Editor formatting defaults
-├── .env.example                 # Sample environment file
-├── .gitignore
-├── CONTRIBUTING.md
-├── LICENSE
-├── Makefile                     # Common local commands
-├── pytest.ini                   # Pytest configuration
-├── README.md                    # Project documentation
-├── requirements.txt             # Python dependencies
-├── run.py                       # Application startup entry point
-└── SECURITY.md                  # Security reporting guidance
+|-- abhed_app/
+|   |-- __init__.py              # Flask application factory
+|   |-- routes.py                # Flask routes and API logic
+|   |-- simulator.py             # Demo simulation and telemetry generation
+|   |-- state.py                 # In-memory node, incident, and event state
+|   |-- static/                  # CSS, JavaScript, and static assets
+|   `-- templates/               # Dashboard HTML templates
+|-- docs/
+|   |-- api.md                   # API reference and payload examples
+|   |-- architecture.md          # Design notes and deployment guidance
+|   |-- hardware-integration.md  # Hardware integration guidance
+|   `-- openapi.yaml             # OpenAPI specification
+|-- hardware/
+|   |-- electrical/              # BOM and electrical reference tables
+|   `-- mechanical/              # 3D mechanical models
+|-- scripts/
+|   |-- publish_sample.py        # Example sensor publisher
+|   `-- serial_bridge.py         # JSON-lines serial adapter
+|-- tests/
+|   `-- test_api.py              # API and workflow tests
+|-- .gitignore
+|-- CONTRIBUTING.md
+|-- LICENSE
+|-- Makefile                     # Common local commands
+|-- pytest.ini                   # Pytest configuration
+|-- README.md                    # Project documentation
+|-- requirements.txt             # Python dependencies
+|-- run.py                       # Application startup entry point
+`-- SECURITY.md                  # Security reporting guidance
 ```
 
 Hardware reference files are grouped by type: the bill of materials and electrical connection/pin tables are in [`hardware/electrical/`](hardware/electrical/), and 3D mechanical models are in [`hardware/mechanical/`](hardware/mechanical/). Runtime application state is currently held in memory and is not stored in a repository data directory.
@@ -173,10 +164,9 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-Copy-Item .env.example .env
 ```
 
-Update `.env` before sending live data, especially `ABHED_INGEST_API_KEY`.
+Sensor ingestion is disabled until `ABHED_INGEST_API_KEY` is set to a strong secret. For example, set it in your environment before starting the app: `$env:ABHED_INGEST_API_KEY = "your-secret"` in PowerShell or `export ABHED_INGEST_API_KEY="your-secret"` on Linux/macOS.
 
 ```powershell
 python run.py
@@ -192,7 +182,6 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
-cp .env.example .env
 ```
 
 Then start the application:
