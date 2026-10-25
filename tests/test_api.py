@@ -144,6 +144,14 @@ def test_duplicate_node_rejected(client):
     assert created.status_code == 400
 
 
+@pytest.mark.parametrize(('coordinate', 'value'), [('x', 12.7), ('y', True)])
+def test_register_node_rejects_non_integer_coordinates(client, coordinate, value):
+    payload = {'id':'ABH-N08','name':'Test node','sensors':['mmWave'],coordinate:value}
+    response = client.post('/api/nodes', json=payload)
+    assert response.status_code == 400
+    assert response.json['error'] == 'x and y positions must be integers from 0 to 100.'
+
+
 def test_simulator_keeps_running_when_all_nodes_are_offline():
     state = SystemState(simulation_enabled=True)
     for node in state.nodes:

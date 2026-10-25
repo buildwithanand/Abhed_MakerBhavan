@@ -332,10 +332,14 @@ class SystemState:
         sensors = list(dict.fromkeys(sensors))
         if not sensors or len(sensors) > 12 or any(len(item) > 60 for item in sensors):
             raise ValueError("Provide between 1 and 12 sensor labels, each no longer than 60 characters.")
+        position_values = (payload.get("x", 50), payload.get("y", 50))
+        if any(isinstance(value, bool) for value in position_values):
+            raise ValueError("x and y positions must be integers from 0 to 100.")
         try:
-            x = int(payload.get("x", 50))
-            y = int(payload.get("y", 50))
+            x, y = (int(value) for value in position_values)
         except (TypeError, ValueError):
+            raise ValueError("x and y positions must be integers from 0 to 100.")
+        if any(isinstance(value, float) and value != int(value) for value in position_values):
             raise ValueError("x and y positions must be integers from 0 to 100.")
         if not (0 <= x <= 100 and 0 <= y <= 100):
             raise ValueError("x and y positions must be between 0 and 100.")
