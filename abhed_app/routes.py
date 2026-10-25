@@ -65,8 +65,11 @@ def register_routes(app) -> None:
 
     @app.put("/api/config")
     def update_config():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"error": "Request body must be a JSON object."}), 400
         try:
-            config = _state().update_config(_json_body())
+            config = _state().update_config(body)
             return jsonify({"ok": True, "config": config})
         except ValueError as exc:
             return jsonify({"error": str(exc)}), 400

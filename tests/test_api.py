@@ -68,6 +68,13 @@ def test_config_validation(client):
     assert invalid_simulation.status_code == 400
 
 
+@pytest.mark.parametrize('body', ['not-json', '[]', 'null'])
+def test_config_update_requires_json_object(client, body):
+    response = client.put('/api/config', data=body, content_type='application/json')
+    assert response.status_code == 400
+    assert response.json['error'] == 'Request body must be a JSON object.'
+
+
 @pytest.mark.parametrize('threshold', [float('nan'), float('inf'), float('-inf')])
 def test_config_rejects_non_finite_threshold(client, threshold):
     response = client.put('/api/config', json={'detection_threshold': threshold})
