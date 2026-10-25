@@ -140,9 +140,10 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-Sensor ingestion is disabled until `ABHED_INGEST_API_KEY` is set to a strong secret. For example, set it in your environment before starting the app: `$env:ABHED_INGEST_API_KEY = "your-secret"` in PowerShell or `export ABHED_INGEST_API_KEY="your-secret"` on Linux/macOS.
+Before starting the app, edit `.env` and replace the `ABHED_INGEST_API_KEY` placeholder with a strong secret. Sensor ingestion remains disabled while the placeholder is unchanged.
 
 ```powershell
 python run.py
@@ -158,7 +159,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+cp .env.example .env
 ```
+
+Before starting the app, edit `.env` and replace the `ABHED_INGEST_API_KEY` placeholder with a strong secret. Sensor ingestion remains disabled while the placeholder is unchanged.
 
 Then start the application:
 
