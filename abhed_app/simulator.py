@@ -10,13 +10,23 @@ from .state import SystemState, utc_now
 class Simulator:
     def __init__(self, state: SystemState, interval: float = 3.5):
         self.state = state
-        self.interval = interval
+        self.interval = max(0.05, float(interval))
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self._paused = False
+        self._tick_count = 0
+        self._last_tick_at: str | None = None
+
+    def set_interval(self, interval: float) -> float:
+        if interval <= 0:
+            raise ValueError("interval must be greater than zero.")
+        self.interval = float(interval)
+        return self.interval
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
+        self._stop.clear()
         self._thread = threading.Thread(target=self._run, name="abhed-demo-simulator", daemon=True)
         self._thread.start()
 
