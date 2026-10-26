@@ -23,24 +23,36 @@ class Simulator:
         self.interval = float(interval)
         return self.interval
 
+    def pause(self) -> None:
+        self._paused = True
+
+    def resume(self) -> None:
+        self._paused = False
+
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
         self._stop.clear()
+        self._paused = False
         self._thread = threading.Thread(target=self._run, name="abhed-demo-simulator", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
         self._stop.set()
+        self._paused = False
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=2)
 
     def _run(self) -> None:
         tick = 0
         while not self._stop.wait(self.interval):
+            if self._paused:
+                continue
             if not self.state.simulation_enabled:
                 continue
             tick += 1
+            self._tick_count = tick
+            self._last_tick_at = utc_now()
             with self.state.lock:
                 for node in self.state.nodes:
                     if node["status"] == "offline":
