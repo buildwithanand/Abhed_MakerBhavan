@@ -27,6 +27,18 @@ class Simulator:
     def resume(self) -> None:
         self._paused = False
 
+    def is_paused(self) -> bool:
+        return self._paused
+
+    def status(self) -> dict[str, object]:
+        with self.state.lock:
+            return {
+                "interval": self.interval,
+                "paused": self._paused,
+                "simulation_enabled": self.state.simulation_enabled,
+                "online_nodes": sum(1 for node in self.state.nodes if node["status"] == "online"),
+            }
+
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
             return
