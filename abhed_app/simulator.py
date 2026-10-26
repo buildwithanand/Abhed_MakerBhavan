@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import random
 import threading
-import time
+
 from .state import SystemState, utc_now
 
 
@@ -14,13 +14,11 @@ class Simulator:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._paused = False
-        self._tick_count = 0
-        self._last_tick_at: str | None = None
 
     def set_interval(self, interval: float) -> float:
         if interval <= 0:
             raise ValueError("interval must be greater than zero.")
-        self.interval = float(interval)
+        self.interval = max(0.05, float(interval))
         return self.interval
 
     def pause(self) -> None:
@@ -51,15 +49,12 @@ class Simulator:
             if not self.state.simulation_enabled:
                 continue
             tick += 1
-            self._tick_count = tick
-            self._last_tick_at = utc_now()
             with self.state.lock:
                 for node in self.state.nodes:
                     if node["status"] == "offline":
                         continue
                     node["last_seen"] = utc_now()
                     node["temperature_c"] = round(max(22.0, min(49.0, node["temperature_c"] + random.uniform(-0.25, 0.25))), 1)
-                    # Gentle battery drift keeps the sample dashboard looking alive.
                     if node["battery_pct"] > 20 and random.random() < 0.08:
                         node["battery_pct"] = max(20, node["battery_pct"] - 1)
                     for reading in node["readings"]:
@@ -73,14 +68,12 @@ class Simulator:
                             reading["value"] = round(max(0.001, 0.018 + random.uniform(-0.009, 0.014)), 3)
                         reading["updated_at"] = utc_now()
                 reporting_nodes = [node for node in self.state.nodes if node["status"] != "offline"]
-                # Add a low-volume stream of operational events without creating a constant alarm feed.
                 if tick % 8 == 0 and reporting_nodes:
                     node = random.choice(reporting_nodes)
                     reading = random.choice(node["readings"])
                     self.state._add_event_unlocked(
                         "sensor_reading", "Telemetry heartbeat",
                         f"{node['id']} · {reading['sensor']} refreshed. Demo telemetry only.", "info", node["id"])
-                # Rare, medium-confidence candidates make the incident workflow demonstrable.
                 online_nodes = [node for node in self.state.nodes if node["status"] == "online"]
                 if tick % 13 == 0 and online_nodes and random.random() < 0.30:
                     node = random.choice(online_nodes)
